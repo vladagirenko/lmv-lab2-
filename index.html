@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ЛР №2 — Додавання страви до кошика: 3 варіанти інтерфейсу</title>
+<style>
+:root{--g:#1f6f5c;--g2:#165242;--gl:#e6f2ee;--ink:#1d2a27;--mut:#6b7a76;--line:#dbe5e1;--bg:#f4f7f6;--warn:#c2410c}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Segoe UI",Roboto,"Noto Sans","DejaVu Sans",Arial,sans-serif;color:var(--ink);background:#dfe7e4}
+#switch{display:flex;gap:8px;align-items:center;padding:8px 16px;background:#16322b;color:#cfe3dc;font-size:13px}
+#switch b{color:#fff;margin-right:6px}
+#switch button{border:1px solid #3d6b5e;background:transparent;color:#cfe3dc;padding:6px 12px;border-radius:6px;cursor:pointer;font:inherit}
+#switch button.on{background:#fff;color:var(--g2);border-color:#fff;font-weight:600}
+body.clean #switch{display:none}
+#app{max-width:1200px;margin:0 auto;background:var(--bg);min-height:700px;position:relative}
+header.top{display:flex;align-items:center;gap:14px;padding:12px 20px;background:var(--g);color:#fff}
+header.top h1{font-size:20px;margin:0;font-weight:700}
+.chip{background:rgba(255,255,255,.18);padding:4px 10px;border-radius:14px;font-size:13px}
+.sp{flex:1}
+.cartbtn{display:flex;align-items:center;gap:8px;background:#fff;color:var(--g2);border:0;border-radius:8px;padding:9px 14px;font:inherit;font-weight:600;cursor:pointer}
+.badge{background:var(--g);color:#fff;border-radius:10px;min-width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;font-size:12px;padding:0 6px}
+.tabs{display:flex;gap:6px;padding:12px 20px 0;flex-wrap:wrap}
+.tab{border:1px solid var(--line);background:#fff;border-radius:18px;padding:8px 16px;cursor:pointer;font:inherit;color:var(--ink)}
+.tab.on{background:var(--g);color:#fff;border-color:var(--g)}
+.filters{padding:10px 20px 0;font-size:13px;color:var(--mut)}
+.filters a{color:var(--g);cursor:pointer;text-decoration:none}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;padding:16px 20px 24px}
+.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:6px;transition:box-shadow .15s;user-select:none}
+.card:hover{box-shadow:0 4px 14px rgba(0,0,0,.09)}
+.ph{height:92px;border-radius:8px;background:linear-gradient(135deg,#e6f2ee,#fdf3e1);display:flex;align-items:center;justify-content:center;font-size:48px}
+.nm{font-weight:600;font-size:15px}
+.meta{font-size:12px;color:var(--mut);min-height:30px}
+.tags{display:flex;gap:4px;flex-wrap:wrap;min-height:20px}
+.tags span{font-size:11px;background:#fdecd8;color:#9a4a07;border-radius:4px;padding:1px 6px}
+.tags span.v{background:var(--gl);color:var(--g2)}
+.row{display:flex;align-items:center;justify-content:space-between;margin-top:auto}
+.price{font-weight:700;font-size:16px}
+.ctl{display:flex;flex-direction:row-reverse;align-items:center;gap:6px}
+.rb{width:44px;height:44px;border-radius:50%;border:0;background:var(--g);color:#fff;font-size:26px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.rb:hover{background:var(--g2)}
+.rb.min{background:#fff;color:var(--g);border:1.5px solid var(--g)}
+.qty{min-width:22px;text-align:center;font-weight:700;font-size:16px}
+.pop{position:absolute;right:20px;top:58px;width:330px;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.18);padding:14px;z-index:20;display:none}
+.pop.show{display:block}
+.toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:#16322b;color:#fff;padding:10px 18px;border-radius:8px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:60}
+.toast.show{opacity:1}
+/* cart list */
+.ci{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line);font-size:14px}
+.ci .e{font-size:22px}.ci .n{flex:1}.ci .s{font-weight:600;min-width:62px;text-align:right}
+.mini{width:30px;height:30px;border-radius:50%;border:1.5px solid var(--g);background:#fff;color:var(--g);font-size:18px;cursor:pointer;line-height:1}
+.mini.p{background:var(--g);color:#fff}
+.tot{display:flex;justify-content:space-between;font-weight:700;font-size:17px;padding:12px 0}
+.go{width:100%;border:0;background:var(--g);color:#fff;border-radius:8px;padding:13px;font:inherit;font-weight:700;cursor:pointer}
+.go:disabled{background:#b9c7c3;cursor:not-allowed}
+.empty{color:var(--mut);font-size:14px;padding:14px 0;text-align:center}
+/* V2 */
+.split{display:grid;grid-template-columns:1fr 360px;min-height:640px}
+.split .grid{grid-template-columns:repeat(3,1fr)}
+.drag .card{cursor:grab}
+.drag .card .ph{height:104px}
+.grip{position:absolute;top:8px;right:10px;color:#9db2ab;font-size:18px}
+.card{position:relative}
+.side{background:#fff;border-left:1px solid var(--line);padding:16px;display:flex;flex-direction:column;gap:10px;transition:background .15s,box-shadow .15s}
+.side.over{background:#eaf6f1;box-shadow:inset 0 0 0 3px var(--g)}
+.side h2{margin:0;font-size:18px}
+.dz{border:2px dashed #9cc2b7;border-radius:12px;padding:18px;text-align:center;color:var(--g2);background:var(--gl);font-size:14px}
+.side.over .dz{background:#cfe9df;border-color:var(--g)}
+.ghost{position:fixed;z-index:90;pointer-events:none;background:#fff;border:2px solid var(--g);border-radius:10px;padding:8px 12px;font-weight:600;box-shadow:0 8px 20px rgba(0,0,0,.25);display:flex;gap:8px;align-items:center;transform:translate(-50%,-50%);opacity:.95}
+.ghost .e{font-size:28px}
+.card.src{opacity:.45}
+/* V3 */
+.v3{display:grid;grid-template-columns:1fr 360px;min-height:640px}
+.cmd{padding:22px 24px 8px;position:relative}
+.cmd label{font-size:13px;color:var(--mut);display:block;margin-bottom:6px}
+.inwrap{display:flex;align-items:center;gap:10px;background:#fff;border:2px solid var(--g);border-radius:10px;padding:0 14px;height:56px}
+.inwrap:focus-within{box-shadow:0 0 0 4px rgba(31,111,92,.25)}
+.inwrap input{flex:1;border:0;outline:0;font:inherit;font-size:20px;background:transparent}
+kbd{font:12px/1 monospace;background:#eef3f1;border:1px solid #c5d3ce;border-bottom-width:2px;border-radius:4px;padding:3px 6px;color:var(--mut)}
+.sug{position:absolute;left:24px;right:24px;top:92px;background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:0 10px 26px rgba(0,0,0,.16);z-index:10;overflow:hidden;display:none}
+.sug.show{display:block}
+.si{display:flex;align-items:center;gap:12px;padding:10px 14px;font-size:16px;cursor:pointer}
+.si .e{font-size:24px}.si .n{flex:1}.si .p{color:var(--mut)}
+.si.act{background:var(--gl)}
+.si .hint{font-size:12px;color:var(--g2);visibility:hidden}.si.act .hint{visibility:visible}
+.si mark{background:#ffe9a8;padding:0}
+.help{padding:10px 24px;font-size:13px;color:var(--mut)}
+.ref{padding:6px 24px 24px}
+.ref h3{font-size:14px;margin:12px 0 6px;color:var(--g2);text-transform:uppercase;letter-spacing:.04em}
+.ref .it{display:flex;justify-content:space-between;font-size:14px;padding:5px 0;border-bottom:1px dotted var(--line)}
+.ref .cols{columns:2;column-gap:28px}
+.ref .it span:first-child{margin-right:10px}
+</style>
+</head>
+<body>
+<div id="switch"><b>Прототип ЛР №2</b>
+ <button data-v="1">Варіант 1 · Кнопка «+» на картці</button>
+ <button data-v="2">Варіант 2 · Перетягування в кошик</button>
+ <button data-v="3">Варіант 3 · Швидке додавання з клавіатури</button>
+ <span class="sp" style="flex:1"></span><span>Кафе «Смачно» · Стіл №5</span></div>
+<div id="app"></div>
+<div class="toast" id="toast"></div>
+<script>
+const D=[
+{id:1,c:'main',n:'Паста карбонара',e:'🍝',p:135,w:'320 г',d:'бекон, вершки, пармезан',a:['глютен','молочне']},
+{id:2,c:'main',n:'Курка гриль',e:'🍗',p:165,w:'280 г',d:'курячі стегна, спеції, овочі',a:[]},
+{id:3,c:'main',n:'Різото з грибами',e:'🍚',p:150,w:'300 г',d:'рис арборіо, печериці, вершки',a:['молочне'],v:1},
+{id:4,c:'main',n:'Бургер «Смачно»',e:'🍔',p:175,w:'350 г',d:'яловичина, чеддер, соус',a:['глютен','молочне']},
+{id:5,c:'starter',n:'Брускета з томатами',e:'🍅',p:95,w:'180 г',d:'багет, томати, базилік',a:['глютен'],v:1},
+{id:6,c:'starter',n:'Салат «Цезар»',e:'🥗',p:140,w:'250 г',d:'курка, салат, пармезан',a:['глютен','молочне']},
+{id:7,c:'starter',n:'Сирні палички',e:'🧀',p:110,w:'200 г',d:'моцарела, паніровка',a:['глютен','молочне'],v:1},
+{id:8,c:'soup',n:'Борщ',e:'🍲',p:95,w:'300 г',d:'буряк, капуста, сметана',a:['молочне']},
+{id:9,c:'soup',n:'Грибний крем-суп',e:'🍄',p:105,w:'300 г',d:'печериці, вершки',a:['молочне'],v:1},
+{id:10,c:'drink',n:'Чай',e:'🍵',p:40,w:'300 мл',d:'чорний або зелений',a:[],v:1},
+{id:11,c:'drink',n:'Сік яблучний',e:'🧃',p:55,w:'250 мл',d:'натуральний',a:[],v:1},
+{id:12,c:'drink',n:'Лимонад',e:'🍋',p:60,w:'400 мл',d:'лимон, м’ята',a:[],v:1},
+{id:13,c:'dessert',n:'Чізкейк',e:'🍰',p:90,w:'130 г',d:'крем-сир, ягідний соус',a:['глютен','молочне'],v:1},
+{id:14,c:'dessert',n:'Брауні',e:'🍫',p:80,w:'110 г',d:'шоколад, волоські горіхи',a:['горіхи','глютен'],v:1}];
+const CATS=[['main','Основні страви'],['starter','Закуски'],['drink','Напої'],['soup','Супи'],['dessert','Десерти']];
+const S={v:1,cat:'main',cart:{},pop:false};
+const $=s=>document.querySelector(s), byId=id=>D.find(x=>x.id==id);
+const fmt=n=>n+' грн';
+function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove('show'),1600)}
+function count(){return Object.values(S.cart).reduce((a,b)=>a+b,0)}
+function sum(){return Object.entries(S.cart).reduce((a,[i,q])=>a+byId(i).p*q,0)}
+function setQty(id,q){q=Math.max(0,Math.min(20,q));if(q)S.cart[id]=q;else delete S.cart[id];refresh()}
+function add(id,q=1){setQty(id,(S.cart[id]||0)+q)}
+function cartList(){const k=Object.keys(S.cart);if(!k.length)return '<div class="empty">Кошик порожній</div>';
+ return k.map(i=>{const d=byId(i),q=S.cart[i];return `<div class="ci"><span class="e">${d.e}</span><span class="n">${d.n}</span><button class="mini" data-m="${i}">–</button><b>${q}</b><button class="mini p" data-p="${i}">+</button><span class="s">${fmt(d.p*q)}</span></div>`}).join('')}
+function bindCart(root){root.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>add(b.dataset.m,-1));root.querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>add(b.dataset.p,1))}
+const tabsHTML=()=>`<div class="tabs">${CATS.map(([k,n])=>`<button class="tab ${S.cat==k?'on':''}" data-c="${k}">${n}</button>`).join('')}</div>`;
+const filtersHTML=()=>`<div class="filters">Фільтри: <a>без горіхів</a> · <a>вегетаріанське</a> · <a>ще фільтри ▾</a></div>`;
+function bindTabs(){document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{S.cat=t.dataset.c;render()})}
+function cardInfo(d){return `<div class="ph">${d.e}</div><div class="nm">${d.n}</div><div class="meta">${d.w} · ${d.d}</div><div class="tags">${d.a.map(a=>`<span>${a}</span>`).join('')}${d.v?'<span class="v">вегетаріанське</span>':''}</div>`}
+/* ---------- V1 ---------- */
+function v1grid(){return D.filter(d=>d.c==S.cat).map(d=>{const q=S.cart[d.id]||0;
+ return `<div class="card" data-id="${d.id}">${cardInfo(d)}<div class="row"><span class="price">${fmt(d.p)}</span><div class="ctl"><button class="rb" data-a="${d.id}" aria-label="Додати">+</button>${q?`<span class="qty">${q}</span><button class="rb min" data-s="${d.id}" aria-label="Менше">–</button>`:''}</div></div></div>`}).join('')}
+function v1(){ $('#app').innerHTML=`<header class="top"><h1>Кафе «Смачно»</h1><span class="chip">Стіл №5</span><span class="sp"></span><button class="cartbtn" id="cb">🛒 Кошик <span class="badge" id="bd">0</span> <span id="ts">0 грн</span></button></header>
+ <div class="pop" id="pop"></div>${tabsHTML()}${filtersHTML()}<div class="grid" id="g1"></div>`;
+ bindTabs();$('#cb').onclick=()=>{S.pop=!S.pop;refresh()};v1fill()}
+function v1fill(){const g=$('#g1');g.innerHTML=v1grid();
+ g.querySelectorAll('[data-a]').forEach(b=>b.onclick=()=>add(b.dataset.a,1));
+ g.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>add(b.dataset.s,-1));
+ $('#bd').textContent=count();$('#ts').textContent=fmt(sum());
+ const p=$('#pop');p.classList.toggle('show',S.pop);p.innerHTML=`<b>Ваше замовлення</b>${cartList()}<div class="tot"><span>Разом</span><span>${fmt(sum())}</span></div><button class="go" ${count()?'':'disabled'}>Оформити</button>`;bindCart(p)}
+/* ---------- V2 ---------- */
+function v2(){ $('#app').innerHTML=`<header class="top"><h1>Кафе «Смачно»</h1><span class="chip">Стіл №5</span></header><div class="split drag"><div>${tabsHTML()}${filtersHTML()}<div class="grid" id="g2"></div></div>
+ <aside class="side" id="side"><h2>🧺 Ваше замовлення</h2><div class="dz" id="dz">Перетягніть страву сюди,<br>щоб додати до кошика</div><div id="cl2"></div><div class="tot"><span>Разом</span><span id="t2"></span></div><button class="go" id="go2">Оформити</button></aside></div>`;
+ bindTabs();$('#g2').innerHTML=D.filter(d=>d.c==S.cat).map(d=>`<div class="card" data-id="${d.id}"><span class="grip">⠿</span>${cardInfo(d)}<div class="row"><span class="price">${fmt(d.p)}</span><span class="meta" style="min-height:0">${S.cart[d.id]?'у кошику: '+S.cart[d.id]:''}</span></div></div>`).join('');
+ const side=$('#side');
+ document.querySelectorAll('#g2 .card').forEach(c=>{c.onpointerdown=ev=>{ev.preventDefault();const d=byId(c.dataset.id);let gh=null;
+  const over=e=>{const r=side.getBoundingClientRect();return e.clientX>=r.left&&e.clientX<=r.right&&e.clientY>=r.top&&e.clientY<=r.bottom};
+  const mv=e=>{if(!gh){gh=document.createElement('div');gh.className='ghost';gh.innerHTML=`<span class="e">${d.e}</span>${d.n}`;document.body.appendChild(gh);c.classList.add('src')}
+   gh.style.left=e.clientX+'px';gh.style.top=e.clientY+'px';side.classList.toggle('over',over(e))};
+  const up=e=>{document.removeEventListener('pointermove',mv);document.removeEventListener('pointerup',up);c.classList.remove('src');
+   if(gh){gh.remove();const ok=over(e);side.classList.remove('over');if(ok){add(d.id,1);toast('Додано: '+d.n)}}};
+  document.addEventListener('pointermove',mv);document.addEventListener('pointerup',up)}});
+ v2fill()}
+function v2fill(){$('#cl2').innerHTML=cartList();bindCart($('#cl2'));$('#t2').textContent=fmt(sum());$('#go2').disabled=!count();
+ document.querySelectorAll('#g2 .card').forEach(c=>{const q=S.cart[c.dataset.id];c.querySelector('.row .meta').textContent=q?'у кошику: '+q:''})}
+/* ---------- V3 ---------- */
+let sugIdx=0;
+function parse(v){const m=v.trim().match(/^(\d{1,2})\s+(.*)$/);return m?{q:+m[1],t:m[2]}:{q:1,t:v.trim()}}
+function matches(t){if(!t)return[];t=t.toLowerCase();return D.filter(d=>d.n.toLowerCase().split(/[\s«»-]+/).some(w=>w.startsWith(t))||d.n.toLowerCase().startsWith(t)).slice(0,5)}
+function hl(n,t){const i=n.toLowerCase().indexOf(t.toLowerCase());return i<0||!t?n:n.slice(0,i)+'<mark>'+n.slice(i,i+t.length)+'</mark>'+n.slice(i+t.length)}
+function v3(){const g=CATS.map(([k,n])=>`<h3>${n}</h3><div class="cols">${D.filter(d=>d.c==k).map(d=>`<div class="it"><span>${d.e} ${d.n}</span><span>${fmt(d.p)}</span></div>`).join('')}</div>`).join('');
+ $('#app').innerHTML=`<header class="top"><h1>Кафе «Смачно»</h1><span class="chip">Стіл №5</span></header><div class="v3"><div><div class="cmd"><label for="q">Швидке додавання страви</label><div class="inwrap">🔎<input id="q" autocomplete="off" placeholder="Назва страви, напр.: «2 пас» — 2 порції пасти"><kbd>/</kbd></div><div class="sug" id="sug"></div></div>
+ <div class="help"><kbd>/</kbd> — перейти до поля · число перед назвою — кількість порцій · <kbd>↑</kbd><kbd>↓</kbd> — вибір · <kbd>Enter</kbd> — додати</div><div class="ref">${g}</div></div>
+ <aside class="side"><h2>🧺 Ваше замовлення</h2><div id="cl3"></div><div class="tot"><span>Разом</span><span id="t3"></span></div><button class="go" id="go3">Оформити</button></aside></div>`;
+ const q=$('#q');q.oninput=()=>{sugIdx=0;sug()};q.onblur=()=>setTimeout(()=>$('#sug').classList.remove('show'),120);
+ q.onkeydown=e=>{const {q:qq,t}=parse(q.value),m=matches(t);
+  if(e.key==='ArrowDown'){sugIdx=Math.min(sugIdx+1,m.length-1);sug();e.preventDefault()}
+  else if(e.key==='ArrowUp'){sugIdx=Math.max(sugIdx-1,0);sug();e.preventDefault()}
+  else if(e.key==='Escape'){q.value='';sug()}
+  else if(e.key==='Enter'&&m.length){const d=m[sugIdx];add(d.id,qq);toast(`Додано: ${d.n} × ${qq}`);q.value='';sug()}};
+ v3fill()}
+function sug(){const {q,t}=parse($('#q').value),m=matches(t),s=$('#sug');
+ s.classList.toggle('show',m.length>0);s.innerHTML=m.map((d,i)=>`<div class="si ${i==sugIdx?'act':''}" data-i="${d.id}"><span class="e">${d.e}</span><span class="n">${hl(d.n,t)}</span><span class="p">${fmt(d.p)}</span><span class="hint"><kbd>Enter</kbd> додати × ${q}</span></div>`).join('');
+ s.querySelectorAll('.si').forEach(el=>el.onmousedown=ev=>{ev.preventDefault();add(el.dataset.i,q);toast(`Додано: ${byId(el.dataset.i).n} × ${q}`);$('#q').value='';sug()})}
+function v3fill(){$('#cl3').innerHTML=cartList();bindCart($('#cl3'));$('#t3').textContent=fmt(sum());$('#go3').disabled=!count()}
+document.addEventListener('keydown',e=>{if(S.v==3&&e.key==='/'&&document.activeElement.id!=='q'){e.preventDefault();$('#q').focus()}});
+/* ---------- core ---------- */
+function refresh(){if(S.v==1)v1fill();else if(S.v==2)v2fill();else v3fill()}
+function render(){document.querySelectorAll('#switch button').forEach(b=>b.classList.toggle('on',b.dataset.v==S.v));[v1,v2,v3][S.v-1]()}
+function setVariant(n){S.v=n;S.pop=false;location.hash='v'+n;render()}
+document.querySelectorAll('#switch button').forEach(b=>b.onclick=()=>setVariant(+b.dataset.v));
+if(location.search.includes('clean'))document.body.classList.add('clean');
+S.v=+(location.hash.match(/v(\d)/)||[0,1])[1];render();
+window.P={S,setVariant,add,setQty,render,refresh};
+</script>
+</body>
+</html>
